@@ -1,6 +1,6 @@
 import argparse,json,sys
 from pathlib import Path
-from . import experiment,tree
+from . import bagging,experiment,tree
 
 
 def strict_load(path):
@@ -20,9 +20,26 @@ def main():
     s.add_parser('demo');a=s.add_parser('predict');a.add_argument('--model',required=True);a.add_argument('--input',required=True)
     a=s.add_parser('fit');a.add_argument('--input',required=True);a.add_argument('--output',required=True);a.add_argument('--min-leaf',type=int,default=5);a.add_argument('--max-depth',type=int,default=20)
     a=s.add_parser('prune');a.add_argument('--model',required=True);a.add_argument('--alpha',type=float,required=True);a.add_argument('--output',required=True)
+    s.add_parser('bag-demo')
+    a=s.add_parser('bag-audit');a.add_argument('--output',required=True)
+    a=s.add_parser('bag-fit');a.add_argument('--input',required=True);a.add_argument('--output',required=True);a.add_argument('--trees',type=int,default=32);a.add_argument('--seed',type=int,default=20261108);a.add_argument('--min-leaf',type=int,default=5);a.add_argument('--max-depth',type=int,default=20)
+    a=s.add_parser('bag-predict');a.add_argument('--model',required=True);a.add_argument('--input',required=True);a.add_argument('--trees',type=int)
+    a=s.add_parser('bag-oob');a.add_argument('--model',required=True);a.add_argument('--input',required=True)
     args=p.parse_args()
     try:
-        if args.command=='audit':obj=experiment.run(args.output)
+        if args.command=='bag-demo':obj=strict_load(Path(__file__).resolve().parent/'artifacts/bagging-report.json')
+        elif args.command=='bag-audit':obj=bagging.run(args.output)
+        elif args.command in ('bag-fit','bag-predict','bag-oob'):
+            raw=strict_load(args.input)
+            fields={'features'} if args.command=='bag-predict' else {'features','targets'}
+            if not isinstance(raw,dict) or set(raw)!=fields:raise ValueError('bag input fields must be '+str(sorted(fields)))
+            if args.command=='bag-fit':
+                model=bagging.fit(raw['features'],raw['targets'],args.trees,args.seed,args.min_leaf,args.max_depth)
+                Path(args.output).write_text(json.dumps(model,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n');obj={'trees':len(model['trees']),'groups':len(model['groups'])}
+            else:
+                model=strict_load(args.model)
+                obj={'predictions':bagging.predict(model,raw['features'],args.trees).tolist()} if args.command=='bag-predict' else bagging.oob(model,raw['features'],raw['targets'],[len(model['trees'])])
+        elif args.command=='audit':obj=experiment.run(args.output)
         elif args.command=='demo':obj=strict_load(Path(__file__).resolve().parent/'artifacts/report.json')
         elif args.command in ('fit','prune'):
             if args.command=='fit':
