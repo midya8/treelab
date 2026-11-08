@@ -1,5 +1,7 @@
 # The frozen response explorer
 
+[Open the live explorer](https://midya8.github.io/treelab/).
+
 TreeLab v0.4 adds a dependency-free static browser explorer for v0.3's exact
 stored response report. Choose any of the three original test rows, either
 unchanged model and any of eleven varied features. Inspect the complete
