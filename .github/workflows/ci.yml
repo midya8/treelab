@@ -57,10 +57,15 @@ jobs:
           (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab sweep-audit --output /tmp/wheel-sweep-refit) > /tmp/wheel-sweep-report.json
           cmp /tmp/wheel-sweep-report.json treelab/artifacts/sweep-report.json
           (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab sweep --model /tmp/installed/treelab/artifacts/bagging-model.json.gz --input "$GITHUB_WORKSPACE/examples/sweep.json") > /tmp/wheel-sweep.json
-          (cd /tmp && PYTHONPATH=/tmp/installed python - "$GITHUB_WORKSPACE" <<'PY'  
+          (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab counterfactual-demo) > /tmp/wheel-counterfactual-demo.json
+          cmp /tmp/wheel-counterfactual-demo.json treelab/artifacts/counterfactual-report.json
+          (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab counterfactual-audit --output /tmp/wheel-counterfactual-refit) > /tmp/wheel-counterfactual-report.json
+          cmp /tmp/wheel-counterfactual-report.json treelab/artifacts/counterfactual-report.json
+          (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab counterfactual --model /tmp/installed/treelab/artifacts/selected-model.json --input "$GITHUB_WORKSPACE/examples/counterfactual.json") > /tmp/wheel-counterfactual.json
+          (cd /tmp && PYTHONPATH=/tmp/installed python - "$GITHUB_WORKSPACE" <<'PY'   
           import json,sys,unittest
           from pathlib import Path
-          import treelab,treelab.__main__,treelab.tree,treelab.data,treelab.experiment,treelab.bagging,treelab.sweep
+          import treelab,treelab.__main__,treelab.tree,treelab.data,treelab.experiment,treelab.bagging,treelab.sweep,treelab.counterfactual
           assert Path(treelab.__file__).is_relative_to('/tmp/installed')
           sys.path.insert(0,str(Path(sys.argv[1])/'tests'))
           from test_experiment import equal
@@ -69,11 +74,12 @@ jobs:
               equal(unittest.TestCase(),json.load(open(Path(sys.argv[1])/'treelab/artifacts'/(name+'.json'))),json.load(open(Path('/tmp/wheel-refit')/(name+'.json'))))
           for name in ['bagging-model.json.gz','bagging-report.json']:
               equal(unittest.TestCase(),load(Path(sys.argv[1])/'treelab/artifacts'/name),load(Path('/tmp/wheel-bag-refit')/name))
+          assert json.load(open('/tmp/wheel-counterfactual.json'))['solution']['changed_features']==[0,1,10]
           assert len(json.load(open('/tmp/wheel-sweep.json'))['segments'])==50
           assert len(json.load(open('/tmp/wheel-bag-predict.json'))['predictions'])==4
           assert json.load(open('/tmp/wheel-bag-oob.json'))['prefixes'][0]['trees']==4
           assert json.load(open('/tmp/wheel-prune-summary.json'))['leaves']==1
-          print('Seven modules, thirteen CLI modes, bundled source hashes and installed-wheel refit verified')
+          print('Eight modules, sixteen CLI modes, bundled source hashes and installed-wheel refit verified')
           PY
           )
   web:
@@ -95,7 +101,8 @@ jobs:
           install-dependencies: true
       - run: python -m pip install -e .
       - run: python examples/export_explorer.py
-      - run: git diff --exit-code docs/data.js
+      - run: python examples/export_counterfactual.py
+      - run: git diff --exit-code docs/data.js docs/counterfactual-data.js
       - env:
           CHROME_BIN: ${{ steps.chrome.outputs.chrome-path }}
-        run: node --test tests/test_explorer.cjs tests/test_explorer_browser.cjs
+        run: node --test tests/test_explorer.cjs tests/test_explorer_browser.cjs tests/test_counterfactual_browser.cjs
