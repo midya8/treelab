@@ -20,3 +20,18 @@ python -m treelab prune --model "$work/tree.json" --alpha 1 --output "$work/prun
 python examples/render_audit.py
 git diff --exit-code assets/tree-audit.svg 2>/dev/null || test ! -d .git
 printf '%s\n' 'Full real-data refit, validation-only pruning, five CLI modes and report reproduction: OK'
+
+python -m treelab bag-demo > "$work/bagging-saved.json"
+cmp "$work/bagging-saved.json" treelab/artifacts/bagging-report.json
+python -m treelab bag-audit --output "$work/bagging-refit" > "$work/bagging-report.json"
+python - "$work" <<'PY2'
+import json,sys,unittest
+from pathlib import Path
+sys.path.insert(0,'tests')
+from test_experiment import equal
+for name in ['bagging-model','bagging-report']:
+    equal(unittest.TestCase(),json.load(open('treelab/artifacts/'+name+'.json')),json.load(open(Path(sys.argv[1])/'bagging-refit'/(name+'.json'))))
+PY2
+python examples/render_bagging.py
+git diff --exit-code assets/bagging-audit.svg 2>/dev/null || test ! -d .git
+printf '%s\n' 'Group-bootstrap full refit, OOB support and bagging artifacts: OK'
