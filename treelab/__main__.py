@@ -1,6 +1,6 @@
 import argparse,gzip,json,sys
 from pathlib import Path
-from . import bagging,experiment,sweep,tree
+from . import bagging,counterfactual,experiment,sweep,tree
 
 
 def strict_load(path):
@@ -30,9 +30,18 @@ def main():
     s.add_parser('sweep-demo')
     a=s.add_parser('sweep-audit');a.add_argument('--output',required=True)
     a=s.add_parser('sweep');a.add_argument('--model',required=True);a.add_argument('--input',required=True);a.add_argument('--trees',type=int)
+    s.add_parser('counterfactual-demo')
+    a=s.add_parser('counterfactual-audit');a.add_argument('--output',required=True)
+    a=s.add_parser('counterfactual');a.add_argument('--model',required=True);a.add_argument('--input',required=True)
     args=p.parse_args()
     try:
-        if args.command=='sweep-demo':obj=strict_load(Path(__file__).resolve().parent/'artifacts/sweep-report.json')
+        if args.command=='counterfactual-demo':obj=strict_load(Path(__file__).resolve().parent/'artifacts/counterfactual-report.json')
+        elif args.command=='counterfactual-audit':obj=counterfactual.run(args.output)
+        elif args.command=='counterfactual':
+            raw=strict_load(args.input)
+            if not isinstance(raw,dict) or not {'row','target','bounds'}<=set(raw) or set(raw)-{'row','target','bounds','weights','immutable'}:raise ValueError('counterfactual input needs row, target, bounds, optional weights/immutable only')
+            obj=counterfactual.search(strict_load(args.model),**raw)
+        elif args.command=='sweep-demo':obj=strict_load(Path(__file__).resolve().parent/'artifacts/sweep-report.json')
         elif args.command=='sweep-audit':obj=sweep.run(args.output)
         elif args.command=='sweep':
             raw=strict_load(args.input)
