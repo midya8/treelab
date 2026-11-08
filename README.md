@@ -4,6 +4,14 @@ A regression tree you can inspect from the first split to the final pruning.
 CART and weakest-link cost-complexity pruning are implemented from scratch in
 NumPy. No scikit-learn model, paid API, pretrained model or autograd engine.
 
+**v0.6: budgeted ensemble counterfactual search with exact objective bounds.**
+Search compatible split boxes across all 32 frozen trees. A best-first frontier
+reports verified common-input witnesses, global lower/upper costs and an honest
+`budget_exhausted` state instead of pretending a timeout proves infeasibility.
+Fixed one-axis witnesses seed the search without hiding easy incumbents.
+All 36 fixed outcomes, including unfinished all-feature searches, are retained.
+[Search method, stopping rule and limits](FOREST_SEARCH.md).
+
 **[v0.5: live constrained multi-feature counterfactuals](https://midya8.github.io/treelab/counterfactual.html) for one frozen CART.**
 Search every leaf under closed feature bounds, immutable inputs and positive
 weighted L1 costs. Return the globally closest finite binary64 witness, every
@@ -65,7 +73,7 @@ The linear control beats the single selected and grown trees on this split.
 - Validation MSE alone selects **19 leaves**, alpha **0.00365165**. The selected
   model is not refit. All **969 test predictions** and six first-row routes are
   retained. The full grown and selected models are reusable JSON.
-- **87 Python tests plus four Node/real-Chrome tests** include 40 independent all-threshold split references, exact
+- **101 Python tests plus five Node/real-Chrome tests** include 40 independent all-threshold split references, exact
   Fraction enumeration of every subtree of 12 small fitted trees, simultaneous
   weakest-link and validation-tie controls, all saved test predictions, complete
   refit, test-target mutation, strict JSON, source hashes and figure data.
@@ -75,7 +83,7 @@ The linear control beats the single selected and grown trees on this split.
 - Exact one-axis slices retain <= boundary inclusion, nextafter witnesses,
   all member leaves and attainable extrema on the common ensemble partition.
   Correlated-feature combinations may be implausible; no causal claim.
-- Sixteen CLI modes and a package with data, frozen models and report. CI checks
+- Nineteen CLI modes and a package with data, frozen models and report. CI checks
   Python 3.10-3.13 and installs the wheel outside the source checkout.
 
 ## Real data, not a random row split with exact-copy leakage
@@ -221,3 +229,15 @@ python -m treelab counterfactual --model treelab/artifacts/selected-model.json -
 [COUNTERFACTUALS.md](COUNTERFACTUALS.md) defines the weighted-L1 guarantee,
 strict binary64 boundaries, exact rational costs, all 36 requests and limits.
 `docs/counterfactual.html` displays the complete frozen results locally.
+
+## Budgeted ensemble counterfactual CLI
+
+```bash
+python -m treelab forest-demo
+python -m treelab forest-audit --output /tmp/forest-audit
+python -m treelab forest-search --model treelab/artifacts/bagging-model.json.gz --input examples/forest-search.json
+```
+
+Open `docs/forest.html` locally for all proof states, exact objective bounds,
+full-member witnesses and the three fixed budgets. [FOREST_SEARCH.md](FOREST_SEARCH.md)
+defines the finite-binary64 model scope, warm starts and incomplete results.
