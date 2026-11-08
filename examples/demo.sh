@@ -45,3 +45,7 @@ python -m treelab sweep --model treelab/artifacts/bagging-model.json.gz --input 
 python examples/render_sweep.py
 git diff --exit-code assets/sweep-audit.svg 2>/dev/null || test ! -d .git
 printf '%s\n' 'Frozen one-axis partitions, fitting-only domains and attainable extrema: OK'
+
+python examples/export_explorer.py
+git diff --exit-code docs/data.js 2>/dev/null || test ! -d .git
+printf '%s\n' 'Complete browser report and source checksum regenerated: OK'
