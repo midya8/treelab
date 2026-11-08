@@ -122,3 +122,7 @@ python -m treelab bag-oob --model /tmp/ensemble.json --input examples/train.json
 - scikit-learn, [cross-validation of grouped data](https://scikit-learn.org/stable/modules/cross_validation.html): whole-group exclusion and domain-specific dependence.
 - Cross Validated, [OOB and dependent rows](https://stats.stackexchange.com/questions/207815/out-of-bag-error-makes-cv-unnecessary-in-random-forests): community caution about dependence and smaller OOB ensembles, corroborative rather than statistical authority.
 - Cortez et al. (2009), [UCI Wine Quality](https://archive.ics.uci.edu/dataset/186/wine%2Bquality), DOI 10.24432/C56S3T, CC BY 4.0 for bundled data and derived results. Code MIT. Established CART, pruning, least squares and bagging are not claimed inventions. No source endorsement.
+
+The complete frozen ensemble is bundled as deterministic `bagging-model.json.gz`
+(gzip of the full JSON, zero timestamp). CLI model loading accepts `.json.gz`
+as well as plain JSON. This changes storage only, not trees, draws or predictions.
