@@ -4,7 +4,7 @@ A regression tree you can inspect from the first split to the final pruning.
 CART and weakest-link cost-complexity pruning are implemented from scratch in
 NumPy. No scikit-learn model, paid API, pretrained model or autograd engine.
 
-**v0.6: budgeted ensemble counterfactual search with exact objective bounds.**
+**[v0.6: live ensemble search bounds](https://midya8.github.io/treelab/forest.html) with exact objective bounds.**
 Search compatible split boxes across all 32 frozen trees. A best-first frontier
 reports verified common-input witnesses, global lower/upper costs and an honest
 `budget_exhausted` state instead of pretending a timeout proves infeasibility.
@@ -238,6 +238,6 @@ python -m treelab forest-audit --output /tmp/forest-audit
 python -m treelab forest-search --model treelab/artifacts/bagging-model.json.gz --input examples/forest-search.json
 ```
 
-Open `docs/forest.html` locally for all proof states, exact objective bounds,
+Open the [live ensemble inspector](https://midya8.github.io/treelab/forest.html) or `docs/forest.html` locally for all proof states, exact objective bounds,
 full-member witnesses and the three fixed budgets. [FOREST_SEARCH.md](FOREST_SEARCH.md)
 defines the finite-binary64 model scope, warm starts and incomplete results.
