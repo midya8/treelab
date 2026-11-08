@@ -90,6 +90,11 @@ class Counterfactual(unittest.TestCase):
         r=self.check(m,[0,tiny/4],[1,1],[[0,1],[-tiny,tiny]])
         cs=r['candidates'];self.assertGreaterEqual(len(cs),2)
         self.assertEqual(cs[0]['cost'],cs[1]['cost']);self.assertLess(rational(cs[0]['cost_exact']),rational(cs[1]['cost_exact']))
+    def test_nonrepresentable_integer_model_scalars_rejected(self):
+        m=tree.fit([[0],[1]],[0,0],1);m['root']['mean']=2**53+1
+        with self.assertRaisesRegex(ValueError,'exactly representable'):cf.search(m,[0],[2**53,2**53],[[0,1]])
+        m=tree.fit([[0],[1]],[0,1],1);m['root']['threshold']=2**53+1
+        with self.assertRaisesRegex(ValueError,'exactly representable'):cf.search(m,[0],[0,1],[[0,1]])
     def test_validation_and_model_not_mutated(self):
         before=copy.deepcopy(self.m);cf.search(self.m,[0,0],[0,3],[[0,1],[0,1]]);self.assertEqual(before,self.m)
         base=dict(model=self.m,row=[0,0],target=[0,3],bounds=[[0,1],[0,1]])
