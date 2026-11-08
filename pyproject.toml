@@ -12,4 +12,4 @@ license = {text = 'MIT code; UCI data CC BY 4.0'}
 [tool.setuptools.packages.find]
 include = ['treelab*']
 [tool.setuptools.package-data]
-treelab = ['data/*', 'artifacts/*.json']
+treelab = ['data/*', 'artifacts/*.json', 'artifacts/*.json.gz']
