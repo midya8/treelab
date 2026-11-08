@@ -1,6 +1,6 @@
 import argparse,gzip,json,sys
 from pathlib import Path
-from . import bagging,counterfactual,experiment,sweep,tree
+from . import bagging,counterfactual,experiment,forest_search,sweep,tree
 
 
 def strict_load(path):
@@ -33,9 +33,18 @@ def main():
     s.add_parser('counterfactual-demo')
     a=s.add_parser('counterfactual-audit');a.add_argument('--output',required=True)
     a=s.add_parser('counterfactual');a.add_argument('--model',required=True);a.add_argument('--input',required=True)
+    s.add_parser('forest-demo')
+    a=s.add_parser('forest-audit');a.add_argument('--output',required=True)
+    a=s.add_parser('forest-search');a.add_argument('--model',required=True);a.add_argument('--input',required=True);a.add_argument('--trees',type=int)
     args=p.parse_args()
     try:
-        if args.command=='counterfactual-demo':obj=strict_load(Path(__file__).resolve().parent/'artifacts/counterfactual-report.json')
+        if args.command=='forest-demo':obj=strict_load(Path(__file__).resolve().parent/'artifacts/forest-search-report.json')
+        elif args.command=='forest-audit':obj=forest_search.run(args.output)
+        elif args.command=='forest-search':
+            raw=strict_load(args.input)
+            if not isinstance(raw,dict) or not {'row','target','bounds'}<=set(raw) or set(raw)-{'row','target','bounds','weights','immutable','max_states','seed_inputs'}:raise ValueError('forest input needs row, target, bounds, optional weights/immutable/max_states/seed_inputs only')
+            obj=forest_search.search(strict_load(args.model),**raw,prefix=args.trees)
+        elif args.command=='counterfactual-demo':obj=strict_load(Path(__file__).resolve().parent/'artifacts/counterfactual-report.json')
         elif args.command=='counterfactual-audit':obj=counterfactual.run(args.output)
         elif args.command=='counterfactual':
             raw=strict_load(args.input)
