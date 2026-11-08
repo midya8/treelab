@@ -4,12 +4,24 @@ A regression tree you can inspect from the first split to the final pruning.
 CART and weakest-link cost-complexity pruning are implemented from scratch in
 NumPy. No scikit-learn model, paid API, pretrained model or autograd engine.
 
-**The linear control still wins.** On this fixed, exact-feature-group-disjoint
-UCI white-wine split, ordinary least squares has test RMSE **0.73422**, versus
-**0.77595** for the validation-selected tree and **0.88255** for the grown tree.
-The point is an auditable learner and pruning path, not a superiority claim.
+**v0.2: group-bootstrap bagging with honest OOB support.** The fixed validation
+grid [1,4,16,32] selects 32 trees. Historical held-out RMSE is **0.70521**,
+compared with same-fit least squares **0.73422**, selected CART **0.77595** and
+grown CART **0.88255**. This reuses the v0.1 test, not a new blind benchmark or
+causal isolation. Exact copies travel together; zero OOB votes mean null.
+
+![Group bagging, OOB coverage and all same-fit controls](assets/bagging-audit.svg)
+
+[Bagging method, scope and sources](BAGGING.md) · [Original pruning method](METHOD.md)
+
+<details>
+<summary>Original v0.1 pruning audit, preserved unchanged</summary>
 
 ![All pruning states, held-out controls and a complete prediction route](https://github.com/midya8/treelab/raw/e9a7aed4d140d15233324045089f58d8152bf943/assets/tree-audit.svg)
+
+The linear control beats the single selected and grown trees on this split.
+
+</details>
 
 ## What runs
 
@@ -24,11 +36,14 @@ The point is an auditable learner and pruning path, not a superiority claim.
 - Validation MSE alone selects **19 leaves**, alpha **0.00365165**. The selected
   model is not refit. All **969 test predictions** and six first-row routes are
   retained. The full grown and selected models are reusable JSON.
-- **40 tests** include 40 independent all-threshold split references, exact
+- **57 tests** include 40 independent all-threshold split references, exact
   Fraction enumeration of every subtree of 12 small fitted trees, simultaneous
   weakest-link and validation-tie controls, all saved test predictions, complete
   refit, test-target mutation, strict JSON, source hashes and figure data.
-- Five CLI modes and a package with data, frozen models and report. CI checks
+- Group-bootstrap bagging preserves all 32 trees, draws and member predictions.
+  OOB excludes the entire feature group, shows each row's vote count and leaves
+  unsupported predictions null. No feature subsampling or uncertainty claim.
+- Ten CLI modes and a package with data, frozen models and report. CI checks
   Python 3.10-3.13 and installs the wheel outside the source checkout.
 
 ## Real data, not a random row split with exact-copy leakage
@@ -62,7 +77,8 @@ The held-out results did not choose these settings or the pruning state.
 | Fitting median | 0.90235 | 0.64499 |
 | Grown CART, 425 leaves | 0.88255 | 0.66363 |
 | Validation-selected CART, 19 leaves | 0.77595 | 0.60758 |
-| Ordinary least squares, 12 coefficients | **0.73422** | **0.57379** |
+| Ordinary least squares, 12 coefficients | 0.73422 | 0.57379 |
+| Validation-selected group bagging, 32 trees | **0.70521** | **0.54568** |
 
 The linear control uses only fitting-row centering/scaling and an intercept.
 No ridge parameter or test-tuned preprocessing. It is solved by NumPy's
@@ -106,7 +122,7 @@ and finite reference tests are not all-input numerical certificates. A route
 explains how this model computes one output, not feature causality or a
 counterfactual effect. Out-of-range inputs get piecewise-constant extrapolation,
 not evidence of accuracy. The learner does not support missing/categorical
-values, weights, ensembles or a production monitoring service.
+values, user-supplied sample weights or a production monitoring service.
 
 [Method, numerical semantics and sources](METHOD.md).
 [Complete report](treelab/artifacts/report.json).
@@ -117,3 +133,17 @@ F., Matos, T. & Reis, J. (2009), UCI Wine Quality,
 DOI [10.24432/C56S3T](https://doi.org/10.24432/C56S3T), CC BY 4.0.
 Established CART, weakest-link pruning and least squares are not claimed
 inventions. No author or UCI endorsement is implied.
+
+## Group-bootstrap CLI
+
+```bash
+python -m treelab bag-demo > /tmp/bagging-saved.json
+python -m treelab bag-audit --output /tmp/bagging-refit
+python -m treelab bag-fit --input examples/train.json --output /tmp/ensemble.json --trees 4 --min-leaf 1
+python -m treelab bag-oob --model /tmp/ensemble.json --input examples/train.json
+```
+
+`bag-predict --model MODEL --input INPUT [--trees PREFIX]` accepts only a
+`features` array matching the fitting width. `bag-oob` requires the exact original
+fitting features/targets and row order. See [BAGGING.md](BAGGING.md) for support
+semantics, the duplicate failure witness and the preserved same-fit controls.
