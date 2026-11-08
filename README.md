@@ -4,6 +4,12 @@ A regression tree you can inspect from the first split to the final pruning.
 CART and weakest-link cost-complexity pruning are implemented from scratch in
 NumPy. No scikit-learn model, paid API, pretrained model or autograd engine.
 
+**v0.4: a static response explorer.** Choose any frozen row/model/feature
+slice, inspect exact intervals and every member leaf/output, and copy or
+download complete input witnesses for attainable extrema. No fitting, new
+inference, API calls, analytics or uploads. See [EXPLORER.md](EXPLORER.md) for
+local use and verification. The browser UI lives in `docs/`.
+
 **v0.3: exact one-feature response slices for frozen trees and ensembles.**
 Intersect reachable leaf regions, combine all member boundaries, and return
 attainable min/max outputs with concrete binary64 input witnesses. All other
@@ -50,7 +56,7 @@ The linear control beats the single selected and grown trees on this split.
 - Validation MSE alone selects **19 leaves**, alpha **0.00365165**. The selected
   model is not refit. All **969 test predictions** and six first-row routes are
   retained. The full grown and selected models are reusable JSON.
-- **70 tests** include 40 independent all-threshold split references, exact
+- **72 Python tests plus three Node/real-Chrome tests** include 40 independent all-threshold split references, exact
   Fraction enumeration of every subtree of 12 small fitted trees, simultaneous
   weakest-link and validation-tie controls, all saved test predictions, complete
   refit, test-target mutation, strict JSON, source hashes and figure data.
@@ -180,3 +186,17 @@ python -m treelab sweep --model treelab/artifacts/bagging-model.json.gz --input 
 Sweep input contains exactly `row`, `feature`, `low`, `high`. Optional `--trees`
 restricts an ensemble prefix. [SWEEPS.md](SWEEPS.md) covers finite-domain and
 boundary semantics, witnesses, tests and interpretation limits.
+
+## Run the static explorer
+
+```bash
+python examples/export_explorer.py
+python -m http.server 8000 --directory docs
+node --test tests/test_explorer.cjs tests/test_explorer_browser.cjs
+```
+
+Open the local server in a browser. All 66 slices, 1,028 segment witnesses and
+member displays are checked against the frozen report. Real Chrome checks
+keyboard movement, min/max, copy success/denial, download names and expanded
+disclosures at 320/390/1280px. The mobile chart reflows without shrinking labels.
+No npm dependencies. Set `CHROME_BIN` if needed. [Explorer details](EXPLORER.md).
