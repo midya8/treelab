@@ -76,3 +76,26 @@ jobs:
           print('Seven modules, thirteen CLI modes, bundled source hashes and installed-wheel refit verified')
           PY
           )
+  web:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "22"
+      - uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2
+        id: chrome
+        with:
+          chrome-version: stable
+          install-dependencies: true
+      - run: python -m pip install -e .
+      - run: python examples/export_explorer.py
+      - run: git diff --exit-code docs/data.js
+      - env:
+          CHROME_BIN: ${{ steps.chrome.outputs.chrome-path }}
+        run: node --test tests/test_explorer.cjs tests/test_explorer_browser.cjs
