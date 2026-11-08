@@ -1,4 +1,4 @@
-import argparse,json,sys
+import argparse,gzip,json,sys
 from pathlib import Path
 from . import bagging,experiment,tree
 
@@ -11,7 +11,9 @@ def strict_load(path):
             if k in d:raise ValueError('duplicate JSON key '+k)
             d[k]=v
         return d
-    return json.loads(Path(path).read_text(),parse_constant=bad,object_pairs_hook=pairs)
+    raw=Path(path).read_bytes()
+    if str(path).endswith('.gz'):raw=gzip.decompress(raw)
+    return json.loads(raw,parse_constant=bad,object_pairs_hook=pairs)
 
 
 def main():
