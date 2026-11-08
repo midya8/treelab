@@ -147,3 +147,7 @@ python -m treelab bag-oob --model /tmp/ensemble.json --input examples/train.json
 `features` array matching the fitting width. `bag-oob` requires the exact original
 fitting features/targets and row order. See [BAGGING.md](BAGGING.md) for support
 semantics, the duplicate failure witness and the preserved same-fit controls.
+
+The complete frozen ensemble is bundled as deterministic `bagging-model.json.gz`
+(gzip of the full JSON, zero timestamp). CLI model loading accepts `.json.gz`
+as well as plain JSON. This changes storage only, not trees, draws or predictions.
