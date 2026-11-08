@@ -34,7 +34,7 @@ def render(r):
     text(40,1225,'No feature subsampling: this is bagging, not a random forest. No calibrated uncertainty interval.',21,muted)
     text(40,1260,'Exact-copy groups do not recover producer/batch identity. One seed and one split; no causal isolation.',21,muted)
     text(40,1322,'UCI Wine Quality / Cortez et al. / CC BY 4.0. Established CART and bootstrap averaging, implemented here.',19,muted)
-    out.append('</g></svg>');return ''.join(out)
+    out.append('</g></svg>');return ''.join(out)+'\n'
 
 if __name__=='__main__':
     r=json.loads((ROOT/'treelab/artifacts/bagging-report.json').read_text());(ROOT/'assets/bagging-audit.svg').write_text(render(r))
