@@ -19,7 +19,7 @@ python examples/export_counterfactual.py
 node --test tests/test_counterfactual_browser.cjs
 ```
 
-A request contains `row`, closed prediction `target: [low, high]`, and one closed `bounds: [low, high]` pair per feature. Optional `weights` must be finite and strictly positive; optional `immutable` contains distinct zero-based feature indices. Everything is converted to binary64, must be finite and within +/-1e100. Unknown CLI fields, nonfinite numbers, reversed ranges, malformed models and ensemble inputs are rejected. No silent target relaxation or fallback witness.
+A request contains `row`, closed prediction `target: [low, high]`, and one closed `bounds: [low, high]` pair per feature. Optional `weights` must be finite and strictly positive; optional `immutable` contains distinct zero-based feature indices. Everything is converted to binary64, must be finite and within +/-1e100. Unknown CLI fields, nonfinite numbers, reversed ranges, malformed models and ensemble inputs are rejected. Leaf means and split thresholds in handwritten JSON models must be exactly representable as binary64; nonrepresentable large integers are rejected rather than silently rounded. Models from this learner already meet that condition. No silent target relaxation or fallback witness.
 
 Directional changes can be expressed through bounds: to permit only increases, set that feature's lower bound to its source value. Bounds need not include the source. If an immutable source coordinate lies outside its domain, the request is infeasible. A source that already meets the target is zero-cost only if it also meets every constraint.
 
@@ -65,6 +65,7 @@ The browser displays the complete frozen report, not an optimizer or arbitrary-i
 
 - Independent small-tree Cartesian-grid oracle constructed from domains, source values, thresholds and successor floats; compare minimum exact cost and leaf ID without using the production box enumeration.
 - Multi-feature targets; immutable features; directional/closed bounds; source outside bounds; already-satisfied targets; absent target outputs; constant trees; singleton domains; repeated split constraints.
+- Nonrepresentable integer-valued JSON model means/thresholds rejected rather than silently certified after rounding.
 - Adjacent binary64 inputs, exact-threshold left routing, subnormal positive exact cost with displayed float zero, false rounded cost ties, and exact-cost leaf-ID ties.
 - All 36 real-data requests reproduced byte-for-byte with fitting forbidden; every feasible leaf witness re-routed and checked against its box, target, cost and immutable inputs.
 - Strict CLI requests, all three CLI modes and installed-wheel artifact/module coverage.
