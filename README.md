@@ -65,7 +65,7 @@ The linear control beats the single selected and grown trees on this split.
 - Validation MSE alone selects **19 leaves**, alpha **0.00365165**. The selected
   model is not refit. All **969 test predictions** and six first-row routes are
   retained. The full grown and selected models are reusable JSON.
-- **86 Python tests plus four Node/real-Chrome tests** include 40 independent all-threshold split references, exact
+- **87 Python tests plus four Node/real-Chrome tests** include 40 independent all-threshold split references, exact
   Fraction enumeration of every subtree of 12 small fitted trees, simultaneous
   weakest-link and validation-tie controls, all saved test predictions, complete
   refit, test-target mutation, strict JSON, source hashes and figure data.
