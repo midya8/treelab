@@ -1,6 +1,6 @@
 import argparse,gzip,json,sys
 from pathlib import Path
-from . import bagging,experiment,tree
+from . import bagging,experiment,sweep,tree
 
 
 def strict_load(path):
@@ -27,9 +27,18 @@ def main():
     a=s.add_parser('bag-fit');a.add_argument('--input',required=True);a.add_argument('--output',required=True);a.add_argument('--trees',type=int,default=32);a.add_argument('--seed',type=int,default=20261108);a.add_argument('--min-leaf',type=int,default=5);a.add_argument('--max-depth',type=int,default=20)
     a=s.add_parser('bag-predict');a.add_argument('--model',required=True);a.add_argument('--input',required=True);a.add_argument('--trees',type=int)
     a=s.add_parser('bag-oob');a.add_argument('--model',required=True);a.add_argument('--input',required=True)
+    s.add_parser('sweep-demo')
+    a=s.add_parser('sweep-audit');a.add_argument('--output',required=True)
+    a=s.add_parser('sweep');a.add_argument('--model',required=True);a.add_argument('--input',required=True);a.add_argument('--trees',type=int)
     args=p.parse_args()
     try:
-        if args.command=='bag-demo':obj=strict_load(Path(__file__).resolve().parent/'artifacts/bagging-report.json')
+        if args.command=='sweep-demo':obj=strict_load(Path(__file__).resolve().parent/'artifacts/sweep-report.json')
+        elif args.command=='sweep-audit':obj=sweep.run(args.output)
+        elif args.command=='sweep':
+            raw=strict_load(args.input)
+            if not isinstance(raw,dict) or set(raw)!={'row','feature','low','high'}:raise ValueError('sweep input must contain only row, feature, low, high')
+            obj=sweep.response(strict_load(args.model),raw['row'],raw['feature'],raw['low'],raw['high'],args.trees)
+        elif args.command=='bag-demo':obj=strict_load(Path(__file__).resolve().parent/'artifacts/bagging-report.json')
         elif args.command=='bag-audit':obj=bagging.run(args.output)
         elif args.command in ('bag-fit','bag-predict','bag-oob'):
             raw=strict_load(args.input)
