@@ -58,3 +58,12 @@ python -m treelab counterfactual --model treelab/artifacts/selected-model.json -
 python examples/export_counterfactual.py
 git diff --exit-code docs/counterfactual-data.js 2>/dev/null || test ! -d .git
 printf '%s\n' 'Constrained multi-feature leaf witnesses, exact rational costs and browser data: OK'
+
+python -m treelab forest-demo > "$work/forest-saved.json"
+cmp "$work/forest-saved.json" treelab/artifacts/forest-search-report.json
+python -m treelab forest-audit --output "$work/forest-audit" > "$work/forest-report.json"
+cmp "$work/forest-report.json" treelab/artifacts/forest-search-report.json
+python -m treelab forest-search --model treelab/artifacts/bagging-model.json.gz --input examples/forest-search.json > "$work/forest.json"
+python examples/export_forest.py
+git diff --exit-code docs/forest-data.js 2>/dev/null || test ! -d .git
+printf '%s\n' 'Bounded ensemble search, verified incumbents and honest unfinished frontier bounds: OK'
