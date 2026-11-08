@@ -9,7 +9,7 @@ UCI white-wine split, ordinary least squares has test RMSE **0.73422**, versus
 **0.77595** for the validation-selected tree and **0.88255** for the grown tree.
 The point is an auditable learner and pruning path, not a superiority claim.
 
-![All pruning states, held-out controls and a complete prediction route](assets/tree-audit.svg)
+![All pruning states, held-out controls and a complete prediction route](https://github.com/midya8/treelab/raw/e9a7aed4d140d15233324045089f58d8152bf943/assets/tree-audit.svg)
 
 ## What runs
 
