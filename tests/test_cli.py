@@ -9,7 +9,7 @@ class CLI(unittest.TestCase):
         r=self.call('demo');self.assertEqual(r.returncode,0,r.stderr);self.assertEqual(r.stdout,(ROOT/'treelab/artifacts/report.json').read_text())
     def test_predict_saved_model_full_paths(self):
         r=self.call('predict','--model',ROOT/'treelab/artifacts/selected-model.json','--input',ROOT/'examples/input.json');self.assertEqual(r.returncode,0,r.stderr);v=json.loads(r.stdout);self.assertEqual(len(v['predictions']),2);self.assertTrue(v['paths'][0]['steps']);self.assertEqual(v['predictions'][0],v['paths'][0]['prediction'])
-    def test_fit_prune_predict_round_trip_outside_checkout(self):
+    def test_fit_prune_predict_round_trip_with_temporary_files(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp=Path(tmp);f=tmp/'train.json';f.write_text(json.dumps({'features':[[0],[1],[2],[3]],'targets':[0,0,2,2]}));m=tmp/'m.json';q=tmp/'q.json'
             a=self.call('fit','--input',f,'--output',m,'--min-leaf',1);self.assertEqual(a.returncode,0,a.stderr);self.assertEqual(json.loads(a.stdout)['leaves'],2)
