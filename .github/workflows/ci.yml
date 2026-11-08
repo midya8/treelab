@@ -44,16 +44,27 @@ jobs:
           (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab audit --output /tmp/wheel-refit) > /tmp/wheel-report.json
           (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab fit --input "$GITHUB_WORKSPACE/examples/train.json" --output /tmp/wheel-fit.json --min-leaf 1) > /tmp/wheel-fit-summary.json
           (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab prune --model /tmp/wheel-fit.json --alpha 1 --output /tmp/wheel-pruned.json) > /tmp/wheel-prune-summary.json
-          (cd /tmp && PYTHONPATH=/tmp/installed python - "$GITHUB_WORKSPACE" <<'PY'
+          (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab bag-demo) > /tmp/wheel-bag-demo.json
+          cmp /tmp/wheel-bag-demo.json treelab/artifacts/bagging-report.json
+          (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab bag-audit --output /tmp/wheel-bag-refit) > /tmp/wheel-bag-report.json
+          (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab bag-fit --input "$GITHUB_WORKSPACE/examples/train.json" --output /tmp/wheel-ensemble.json --trees 4 --min-leaf 1) > /tmp/wheel-bag-summary.json
+          python -c "import json; d=json.load(open('examples/train.json'));json.dump({'features':d['features']},open('/tmp/bag-input.json','w'))"
+          (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab bag-predict --model /tmp/wheel-ensemble.json --input /tmp/bag-input.json) > /tmp/wheel-bag-predict.json
+          (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab bag-oob --model /tmp/wheel-ensemble.json --input "$GITHUB_WORKSPACE/examples/train.json") > /tmp/wheel-bag-oob.json
+          (cd /tmp && PYTHONPATH=/tmp/installed python - "$GITHUB_WORKSPACE" <<'PY' 
           import json,sys,unittest
           from pathlib import Path
-          import treelab,treelab.__main__,treelab.tree,treelab.data,treelab.experiment
+          import treelab,treelab.__main__,treelab.tree,treelab.data,treelab.experiment,treelab.bagging
           assert Path(treelab.__file__).is_relative_to('/tmp/installed')
           sys.path.insert(0,str(Path(sys.argv[1])/'tests'))
           from test_experiment import equal
           for name in ['report','grown-model','selected-model']:
               equal(unittest.TestCase(),json.load(open(Path(sys.argv[1])/'treelab/artifacts'/(name+'.json'))),json.load(open(Path('/tmp/wheel-refit')/(name+'.json'))))
+          for name in ['bagging-model','bagging-report']:
+              equal(unittest.TestCase(),json.load(open(Path(sys.argv[1])/'treelab/artifacts'/(name+'.json'))),json.load(open(Path('/tmp/wheel-bag-refit')/(name+'.json'))))
+          assert len(json.load(open('/tmp/wheel-bag-predict.json'))['predictions'])==4
+          assert json.load(open('/tmp/wheel-bag-oob.json'))['prefixes'][0]['trees']==4
           assert json.load(open('/tmp/wheel-prune-summary.json'))['leaves']==1
-          print('Five modules, five CLI modes, bundled source hashes and installed-wheel refit verified')
+          print('Six modules, ten CLI modes, bundled source hashes and installed-wheel refit verified')
           PY
           )
