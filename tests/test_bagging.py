@@ -1,10 +1,12 @@
-import copy,json,tempfile,unittest
+import copy,gzip,json,tempfile,unittest
 from pathlib import Path
 from unittest import mock
 import numpy as np
 from treelab import bagging,data,tree
 from test_experiment import equal
 ROOT=Path(__file__).resolve().parents[1]
+def load(p):
+    p=Path(p);return json.loads(gzip.decompress(p.read_bytes()) if str(p).endswith('.gz') else p.read_bytes())
 
 class BaggingTests(unittest.TestCase):
     def setUp(self):
@@ -65,9 +67,9 @@ class BaggingTests(unittest.TestCase):
     def test_full_refit_reproduces_both_artifacts(self):
         with tempfile.TemporaryDirectory() as d:
             bagging.run(d)
-            for n in ['bagging-model','bagging-report']:equal(self,json.load(open(Path(d)/(n+'.json'))),json.load(open(ROOT/'treelab/artifacts'/(n+'.json'))))
+            for n in ['bagging-model.json.gz','bagging-report.json']:equal(self,load(Path(d)/n),load(ROOT/'treelab/artifacts'/n))
     def test_real_every_group_oob_membership_and_saved_tree_prediction(self):
-        e=json.load(open(ROOT/'treelab/artifacts/bagging-model.json'));r=json.load(open(ROOT/'treelab/artifacts/bagging-report.json'));x,y,_=data.load();s=data.split(x);f=s['fit'];v=s['validation'];t=s['test'];mask=bagging.oob_mask(e)
+        e=load(ROOT/'treelab/artifacts/bagging-model.json.gz');r=json.load(open(ROOT/'treelab/artifacts/bagging-report.json'));x,y,_=data.load();s=data.split(x);f=s['fit'];v=s['validation'];t=s['test'];mask=bagging.oob_mask(e)
         for k,m in enumerate(e['trees']):
             included={i for j in m['draws'] for i in e['groups'][j]};np.testing.assert_array_equal(mask[k],[i not in included for i in range(len(f))])
             for rows,saved in [(f,r['oob']['member_predictions'][k]),(v,r['validation_member_predictions'][k]),(t,r['test_member_predictions'][k])]:
@@ -82,7 +84,7 @@ class BaggingTests(unittest.TestCase):
     def test_changed_test_targets_do_not_change_ensemble_or_prefix_selection(self):
         x,y,names=data.load();y=y.copy();s=data.split(x);y[s['test']]=10-y[s['test']]
         with tempfile.TemporaryDirectory() as d,mock.patch('treelab.data.load',return_value=(x,y,names)):
-            r=bagging.run(d);saved=json.load(open(ROOT/'treelab/artifacts/bagging-report.json'));self.assertEqual(r['selected_trees'],saved['selected_trees']);self.assertEqual(r['prefixes'],saved['prefixes']);self.assertEqual(r['test_member_predictions'],saved['test_member_predictions']);equal(self,json.load(open(Path(d)/'bagging-model.json')),json.load(open(ROOT/'treelab/artifacts/bagging-model.json')))
+            r=bagging.run(d);saved=json.load(open(ROOT/'treelab/artifacts/bagging-report.json'));self.assertEqual(r['selected_trees'],saved['selected_trees']);self.assertEqual(r['prefixes'],saved['prefixes']);self.assertEqual(r['test_member_predictions'],saved['test_member_predictions']);equal(self,load(Path(d)/'bagging-model.json.gz'),load(ROOT/'treelab/artifacts/bagging-model.json.gz'))
     def test_test_predictions_are_only_computed_after_selection(self):
         x,_,_=data.load();s=data.split(x);selected=False;original=bagging.select;predict=bagging.prediction_matrix
         def choose(*a):
