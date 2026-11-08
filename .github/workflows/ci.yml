@@ -52,10 +52,15 @@ jobs:
           python -c "import json; d=json.load(open('examples/train.json'));json.dump({'features':d['features']},open('/tmp/bag-input.json','w'))"
           (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab bag-predict --model /tmp/wheel-ensemble.json --input /tmp/bag-input.json) > /tmp/wheel-bag-predict.json
           (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab bag-oob --model /tmp/wheel-ensemble.json --input "$GITHUB_WORKSPACE/examples/train.json") > /tmp/wheel-bag-oob.json
-          (cd /tmp && PYTHONPATH=/tmp/installed python - "$GITHUB_WORKSPACE" <<'PY' 
+          (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab sweep-demo) > /tmp/wheel-sweep-demo.json
+          cmp /tmp/wheel-sweep-demo.json treelab/artifacts/sweep-report.json
+          (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab sweep-audit --output /tmp/wheel-sweep-refit) > /tmp/wheel-sweep-report.json
+          cmp /tmp/wheel-sweep-report.json treelab/artifacts/sweep-report.json
+          (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab sweep --model /tmp/installed/treelab/artifacts/bagging-model.json.gz --input "$GITHUB_WORKSPACE/examples/sweep.json") > /tmp/wheel-sweep.json
+          (cd /tmp && PYTHONPATH=/tmp/installed python - "$GITHUB_WORKSPACE" <<'PY'  
           import json,sys,unittest
           from pathlib import Path
-          import treelab,treelab.__main__,treelab.tree,treelab.data,treelab.experiment,treelab.bagging
+          import treelab,treelab.__main__,treelab.tree,treelab.data,treelab.experiment,treelab.bagging,treelab.sweep
           assert Path(treelab.__file__).is_relative_to('/tmp/installed')
           sys.path.insert(0,str(Path(sys.argv[1])/'tests'))
           from test_experiment import equal
@@ -64,9 +69,10 @@ jobs:
               equal(unittest.TestCase(),json.load(open(Path(sys.argv[1])/'treelab/artifacts'/(name+'.json'))),json.load(open(Path('/tmp/wheel-refit')/(name+'.json'))))
           for name in ['bagging-model.json.gz','bagging-report.json']:
               equal(unittest.TestCase(),load(Path(sys.argv[1])/'treelab/artifacts'/name),load(Path('/tmp/wheel-bag-refit')/name))
+          assert len(json.load(open('/tmp/wheel-sweep.json'))['segments'])==50
           assert len(json.load(open('/tmp/wheel-bag-predict.json'))['predictions'])==4
           assert json.load(open('/tmp/wheel-bag-oob.json'))['prefixes'][0]['trees']==4
           assert json.load(open('/tmp/wheel-prune-summary.json'))['leaves']==1
-          print('Six modules, ten CLI modes, bundled source hashes and installed-wheel refit verified')
+          print('Seven modules, thirteen CLI modes, bundled source hashes and installed-wheel refit verified')
           PY
           )
