@@ -49,3 +49,12 @@ printf '%s\n' 'Frozen one-axis partitions, fitting-only domains and attainable e
 python examples/export_explorer.py
 git diff --exit-code docs/data.js 2>/dev/null || test ! -d .git
 printf '%s\n' 'Complete browser report and source checksum regenerated: OK'
+
+python -m treelab counterfactual-demo > "$work/counterfactual-saved.json"
+cmp "$work/counterfactual-saved.json" treelab/artifacts/counterfactual-report.json
+python -m treelab counterfactual-audit --output "$work/counterfactual-refit" > "$work/counterfactual-report.json"
+cmp "$work/counterfactual-report.json" treelab/artifacts/counterfactual-report.json
+python -m treelab counterfactual --model treelab/artifacts/selected-model.json --input examples/counterfactual.json > "$work/counterfactual.json"
+python examples/export_counterfactual.py
+git diff --exit-code docs/counterfactual-data.js 2>/dev/null || test ! -d .git
+printf '%s\n' 'Constrained multi-feature leaf witnesses, exact rational costs and browser data: OK'
