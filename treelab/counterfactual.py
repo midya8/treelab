@@ -19,6 +19,13 @@ def search(model, row, target, bounds, weights=None, immutable=None):
     Equal exact costs break by leaf ID. No causal/plausibility claim is made.
     """
     tree.validate(model)
+    def binary64_nodes(node):
+        # Handwritten JSON models may use integers beyond float's exact range.
+        # Do not silently certify rounded leaf outputs or split thresholds.
+        for key in ['mean']+(['threshold'] if 'feature' in node else []):
+            if float(node[key])!=node[key]:raise ValueError('model '+key+' must be exactly representable as binary64')
+        if 'feature' in node:binary64_nodes(node['left']);binary64_nodes(node['right'])
+    binary64_nodes(model['root'])
     row=tree.array(row,1,'row').tolist();d=model['features']
     if len(row)!=d:raise ValueError('wrong feature width')
     target=tree.array(target,1,'target').tolist()
