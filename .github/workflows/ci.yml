@@ -46,6 +46,7 @@ jobs:
           (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab prune --model /tmp/wheel-fit.json --alpha 1 --output /tmp/wheel-pruned.json) > /tmp/wheel-prune-summary.json
           (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab bag-demo) > /tmp/wheel-bag-demo.json
           cmp /tmp/wheel-bag-demo.json treelab/artifacts/bagging-report.json
+          (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab bag-predict --model /tmp/installed/treelab/artifacts/bagging-model.json.gz --input "$GITHUB_WORKSPACE/examples/input.json") > /tmp/wheel-frozen-bag-predict.json
           (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab bag-audit --output /tmp/wheel-bag-refit) > /tmp/wheel-bag-report.json
           (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab bag-fit --input "$GITHUB_WORKSPACE/examples/train.json" --output /tmp/wheel-ensemble.json --trees 4 --min-leaf 1) > /tmp/wheel-bag-summary.json
           python -c "import json; d=json.load(open('examples/train.json'));json.dump({'features':d['features']},open('/tmp/bag-input.json','w'))"
@@ -58,10 +59,11 @@ jobs:
           assert Path(treelab.__file__).is_relative_to('/tmp/installed')
           sys.path.insert(0,str(Path(sys.argv[1])/'tests'))
           from test_experiment import equal
+          from test_bagging import load
           for name in ['report','grown-model','selected-model']:
               equal(unittest.TestCase(),json.load(open(Path(sys.argv[1])/'treelab/artifacts'/(name+'.json'))),json.load(open(Path('/tmp/wheel-refit')/(name+'.json'))))
-          for name in ['bagging-model','bagging-report']:
-              equal(unittest.TestCase(),json.load(open(Path(sys.argv[1])/'treelab/artifacts'/(name+'.json'))),json.load(open(Path('/tmp/wheel-bag-refit')/(name+'.json'))))
+          for name in ['bagging-model.json.gz','bagging-report.json']:
+              equal(unittest.TestCase(),load(Path(sys.argv[1])/'treelab/artifacts'/name),load(Path('/tmp/wheel-bag-refit')/name))
           assert len(json.load(open('/tmp/wheel-bag-predict.json'))['predictions'])==4
           assert json.load(open('/tmp/wheel-bag-oob.json'))['prefixes'][0]['trees']==4
           assert json.load(open('/tmp/wheel-prune-summary.json'))['leaves']==1
