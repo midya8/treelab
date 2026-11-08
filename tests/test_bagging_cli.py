@@ -8,11 +8,12 @@ class BaggingCLI(unittest.TestCase):
         return json.loads(r.stdout) if ok else r.stderr
     def test_five_bagging_modes_roundtrip(self):
         self.assertEqual(self.cmd('bag-demo')['selected_trees'],32)
+        self.assertEqual(len(self.cmd('bag-predict','--model','treelab/artifacts/bagging-model.json.gz','--input','examples/input.json')['predictions']),2)
         with tempfile.TemporaryDirectory() as d:
             p=Path(d);m=p/'model.json';self.assertEqual(self.cmd('bag-fit','--input','examples/train.json','--output',m,'--min-leaf',1,'--trees',4)['trees'],4)
             raw=json.load(open(ROOT/'examples/train.json'));(p/'input.json').write_text(json.dumps({'features':raw['features']}));self.assertEqual(len(self.cmd('bag-predict','--model',m,'--input',p/'input.json')['predictions']),len(raw['features']))
             r=self.cmd('bag-oob','--model',m,'--input','examples/train.json');self.assertEqual(r['prefixes'][0]['trees'],4)
-            r=self.cmd('bag-audit','--output',p/'audit');self.assertEqual(r['selected_trees'],32);self.assertTrue((p/'audit/bagging-model.json').is_file())
+            r=self.cmd('bag-audit','--output',p/'audit');self.assertEqual(r['selected_trees'],32);self.assertTrue((p/'audit/bagging-model.json.gz').is_file())
     def test_invalid_cli_data_and_json(self):
         with tempfile.TemporaryDirectory() as d:
             p=Path(d);m=p/'model.json';self.cmd('bag-fit','--input','examples/train.json','--output',m,'--trees',2)
