@@ -4,7 +4,7 @@ A regression tree you can inspect from the first split to the final pruning.
 CART and weakest-link cost-complexity pruning are implemented from scratch in
 NumPy. No scikit-learn model, paid API, pretrained model or autograd engine.
 
-**v0.4: a static response explorer.** Choose any frozen row/model/feature
+**[v0.4: open the live response explorer](https://midya8.github.io/treelab/).** Choose any frozen row/model/feature
 slice, inspect exact intervals and every member leaf/output, and copy or
 download complete input witnesses for attainable extrema. No fitting, new
 inference, API calls, analytics or uploads. See [EXPLORER.md](EXPLORER.md) for
