@@ -4,7 +4,7 @@ A regression tree you can inspect from the first split to the final pruning.
 CART and weakest-link cost-complexity pruning are implemented from scratch in
 NumPy. No scikit-learn model, paid API, pretrained model or autograd engine.
 
-**v0.5: constrained multi-feature counterfactuals for one frozen CART.**
+**[v0.5: live constrained multi-feature counterfactuals](https://midya8.github.io/treelab/counterfactual.html) for one frozen CART.**
 Search every leaf under closed feature bounds, immutable inputs and positive
 weighted L1 costs. Return the globally closest finite binary64 witness, every
 feasible candidate and an exact rational cost, with strict-threshold successors
