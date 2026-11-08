@@ -2,7 +2,7 @@
 
 Established bagging. No feature subsampling or calibrated uncertainty interval.
 """
-import hashlib,json
+import gzip,hashlib,json
 import numpy as np
 from . import data,tree
 
@@ -113,5 +113,7 @@ def run(folder):
     report={'format':'treelab-bagging-report-v1','dataset_sha256':data.HASH,'features':names,'fit_feature_sha256':e['feature_sha256'],'fit_target_sha256':e['target_sha256'],'protocol':{'seed':20261108,'trees_fitted':32,'prefix_grid':prefixes,'min_leaf':5,'max_depth':20,'sampling':'Draw G fitting-feature groups G times with replacement per tree; include every original row of every drawn group, repeated for multiplicity','selection':'Minimum validation MSE, exact ties prefer smaller prefix; no OOB or test selection','prediction':'Unweighted average of tree predictions; no feature subsampling, no pruning, not a random forest','OOB':'Exclude the entire exact feature group. Supported-subset row-weighted MSE; zero votes -> null, not a zero prediction.'},'split_counts':prior['split_counts'],'indices':prior['indices'],'fit_groups':len(e['groups']),'bootstrap_rows':[m['model']['fit_rows'] for m in e['trees']],'bootstrap_leaves':[tree.subtree(m['model']['root'])[1] for m in e['trees']],'prefixes':[{'trees':bb,'validation_mse':score,'oob_supported_rows':oo['supported_rows'],'oob_unsupported_rows':oo['unsupported_rows'],'oob_mse_supported':oo['row_weighted_mse_on_supported']} for bb,score,oo in zip(prefixes,validation,o['prefixes'])],'selected_trees':b,'test_metrics':{'bagged_selected':experiment.metrics(y[t],pred),**prior['test_metrics']},'validation_member_predictions':vm.tolist(),'test_member_predictions':tm.tolist(),'test_rows':[{'row':int(row),'target':float(y[row]),'prediction':float(pred[j])} for j,row in enumerate(t)],'oob':o,'duplicate_witness':duplicate_witness(),'limits':['Feature groups are exact-copy exclusions, not known producer/batch/time-independent experimental units','Group sampling changes the resampling unit; row counts vary with group sizes, and validation/test metrics remain row weighted','OOB uses fewer, row-dependent trees and supported subsets; do not compare different-prefix OOB MSE as the same set or treat spread as calibrated uncertainty','One seed and one split; prefix selection uses validation, so the reused historical test is descriptive rather than a new blind benchmark','Established bootstrap averaging, not feature-subsampled random forests, causal component isolation, confidence intervals or proof of future performance']}
     out=Path(folder);out.mkdir(parents=True,exist_ok=True)
     for name,obj in [('bagging-report',report),('bagging-model',e)]:
-        (out/(name+'.json')).write_text(json.dumps(obj,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n')
+        raw=(json.dumps(obj,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode()
+        if name=='bagging-model':(out/(name+'.json.gz')).write_bytes(gzip.compress(raw,mtime=0))
+        else:(out/(name+'.json')).write_bytes(raw)
     return report
