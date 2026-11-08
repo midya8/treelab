@@ -29,8 +29,9 @@ import json,sys,unittest
 from pathlib import Path
 sys.path.insert(0,'tests')
 from test_experiment import equal
-for name in ['bagging-model','bagging-report']:
-    equal(unittest.TestCase(),json.load(open('treelab/artifacts/'+name+'.json')),json.load(open(Path(sys.argv[1])/'bagging-refit'/(name+'.json'))))
+from test_bagging import load
+for name in ['bagging-model.json.gz','bagging-report.json']:
+    equal(unittest.TestCase(),load(Path('treelab/artifacts')/name),load(Path(sys.argv[1])/'bagging-refit'/name))
 PY2
 python examples/render_bagging.py
 git diff --exit-code assets/bagging-audit.svg 2>/dev/null || test ! -d .git
