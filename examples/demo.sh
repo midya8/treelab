@@ -36,3 +36,12 @@ PY2
 python examples/render_bagging.py
 git diff --exit-code assets/bagging-audit.svg 2>/dev/null || test ! -d .git
 printf '%s\n' 'Group-bootstrap full refit, OOB support and bagging artifacts: OK'
+
+python -m treelab sweep-demo > "$work/sweep-saved.json"
+cmp "$work/sweep-saved.json" treelab/artifacts/sweep-report.json
+python -m treelab sweep-audit --output "$work/sweep-refit" > "$work/sweep-report.json"
+cmp "$work/sweep-report.json" treelab/artifacts/sweep-report.json
+python -m treelab sweep --model treelab/artifacts/bagging-model.json.gz --input examples/sweep.json > "$work/sweep.json"
+python examples/render_sweep.py
+git diff --exit-code assets/sweep-audit.svg 2>/dev/null || test ! -d .git
+printf '%s\n' 'Frozen one-axis partitions, fitting-only domains and attainable extrema: OK'
