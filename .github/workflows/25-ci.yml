@@ -1,0 +1,55 @@
+name: CI
+on: [push, pull_request]
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  OPENBLAS_NUM_THREADS: "1"
+  OMP_NUM_THREADS: "1"
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install -e .
+      - run: python -m unittest discover -s tests -v
+      - run: bash examples/demo.sh
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip wheel . --no-deps -w /tmp/wheels
+      - run: python -m pip install --target /tmp/installed /tmp/wheels/*.whl
+      - run: |
+          (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab demo) > /tmp/wheel-demo.json
+          cmp /tmp/wheel-demo.json treelab/artifacts/report.json
+          (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab predict --model /tmp/installed/treelab/artifacts/selected-model.json --input "$GITHUB_WORKSPACE/examples/input.json") > /tmp/wheel-predict.json
+          PYTHONPATH=/tmp/installed python -m treelab predict --model treelab/artifacts/selected-model.json --input examples/input.json > /tmp/source-predict.json
+          cmp /tmp/wheel-predict.json /tmp/source-predict.json
+          (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab audit --output /tmp/wheel-refit) > /tmp/wheel-report.json
+          (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab fit --input "$GITHUB_WORKSPACE/examples/train.json" --output /tmp/wheel-fit.json --min-leaf 1) > /tmp/wheel-fit-summary.json
+          (cd /tmp && PYTHONPATH=/tmp/installed python -m treelab prune --model /tmp/wheel-fit.json --alpha 1 --output /tmp/wheel-pruned.json) > /tmp/wheel-prune-summary.json
+          (cd /tmp && PYTHONPATH=/tmp/installed python - "$GITHUB_WORKSPACE" <<'PY'
+          import json,sys,unittest
+          from pathlib import Path
+          import treelab,treelab.__main__,treelab.tree,treelab.data,treelab.experiment
+          assert Path(treelab.__file__).is_relative_to('/tmp/installed')
+          sys.path.insert(0,str(Path(sys.argv[1])/'tests'))
+          from test_experiment import equal
+          for name in ['report','grown-model','selected-model']:
+              equal(unittest.TestCase(),json.load(open(Path(sys.argv[1])/'treelab/artifacts'/(name+'.json'))),json.load(open(Path('/tmp/wheel-refit')/(name+'.json'))))
+          assert json.load(open('/tmp/wheel-prune-summary.json'))['leaves']==1
+          print('Five modules, five CLI modes, bundled source hashes and installed-wheel refit verified')
+          PY
+          )
