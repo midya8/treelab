@@ -4,6 +4,15 @@ A regression tree you can inspect from the first split to the final pruning.
 CART and weakest-link cost-complexity pruning are implemented from scratch in
 NumPy. No scikit-learn model, paid API, pretrained model or autograd engine.
 
+**v0.5: constrained multi-feature counterfactuals for one frozen CART.**
+Search every leaf under closed feature bounds, immutable inputs and positive
+weighted L1 costs. Return the globally closest finite binary64 witness, every
+feasible candidate and an exact rational cost, with strict-threshold successors
+rather than an epsilon. All 36 fixed real-data requests retain infeasible outcomes.
+[Method, CLI and limits](COUNTERFACTUALS.md). A model counterfactual is not causal
+recourse, plausible chemistry or an ensemble optimum. The existing response
+analysis and all original data/models/reports remain unchanged.
+
 **[v0.4: open the live response explorer](https://midya8.github.io/treelab/).** Choose any frozen row/model/feature
 slice, inspect exact intervals and every member leaf/output, and copy or
 download complete input witnesses for attainable extrema. No fitting, new
@@ -56,7 +65,7 @@ The linear control beats the single selected and grown trees on this split.
 - Validation MSE alone selects **19 leaves**, alpha **0.00365165**. The selected
   model is not refit. All **969 test predictions** and six first-row routes are
   retained. The full grown and selected models are reusable JSON.
-- **72 Python tests plus three Node/real-Chrome tests** include 40 independent all-threshold split references, exact
+- **86 Python tests plus four Node/real-Chrome tests** include 40 independent all-threshold split references, exact
   Fraction enumeration of every subtree of 12 small fitted trees, simultaneous
   weakest-link and validation-tie controls, all saved test predictions, complete
   refit, test-target mutation, strict JSON, source hashes and figure data.
@@ -66,7 +75,7 @@ The linear control beats the single selected and grown trees on this split.
 - Exact one-axis slices retain <= boundary inclusion, nextafter witnesses,
   all member leaves and attainable extrema on the common ensemble partition.
   Correlated-feature combinations may be implausible; no causal claim.
-- Thirteen CLI modes and a package with data, frozen models and report. CI checks
+- Sixteen CLI modes and a package with data, frozen models and report. CI checks
   Python 3.10-3.13 and installs the wheel outside the source checkout.
 
 ## Real data, not a random row split with exact-copy leakage
@@ -200,3 +209,15 @@ member displays are checked against the frozen report. Real Chrome checks
 keyboard movement, min/max, copy success/denial, download names and expanded
 disclosures at 320/390/1280px. The mobile chart reflows without shrinking labels.
 No npm dependencies. Set `CHROME_BIN` if needed. [Explorer details](EXPLORER.md).
+
+## Constrained multi-feature counterfactual CLI
+
+```bash
+python -m treelab counterfactual-demo
+python -m treelab counterfactual-audit --output /tmp/counterfactual-audit
+python -m treelab counterfactual --model treelab/artifacts/selected-model.json --input examples/counterfactual.json
+```
+
+[COUNTERFACTUALS.md](COUNTERFACTUALS.md) defines the weighted-L1 guarantee,
+strict binary64 boundaries, exact rational costs, all 36 requests and limits.
+`docs/counterfactual.html` displays the complete frozen results locally.
