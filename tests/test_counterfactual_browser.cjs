@@ -7,7 +7,14 @@ test('real Chrome: all 36 counterfactual requests, complete candidates, copy fal
  try{
   for(let i=0;i<1200&&!startupError&&browser.exitCode===null&&!fs.existsSync(path.join(profile,'DevToolsActivePort'));i++)await delay(25);
   assert.ok(fs.existsSync(path.join(profile,'DevToolsActivePort')),`Chrome debugger did not start: ${startupError?.message||diagnostics||browser.exitCode}`);const port=fs.readFileSync(path.join(profile,'DevToolsActivePort'),'utf8').split('\n')[0];
-  const tabs=await(await fetch(`http://127.0.0.1:${port}/json/list`)).json();ws=new WebSocket(tabs.find(t=>t.type==='page').webSocketDebuggerUrl);await new Promise((res,rej)=>{ws.onopen=res;ws.onerror=rej;});
+  // The port file can appear before the debugger starts accepting requests.
+  let tab,lastDebuggerError;
+  for(let i=0;i<200&&browser.exitCode===null&&!tab;i++){
+   try{const response=await fetch(`http://127.0.0.1:${port}/json/list`,{signal:AbortSignal.timeout(1000)});if(!response.ok)throw new Error('Debugger HTTP '+response.status);const tabs=await response.json();tab=tabs.find(t=>t.type==='page'&&t.webSocketDebuggerUrl);}catch(error){lastDebuggerError=error;}
+   if(!tab)await delay(25);
+  }
+  assert.ok(tab,`Chrome debugger page did not become ready: ${lastDebuggerError?.message||diagnostics||browser.exitCode}`);
+  ws=new WebSocket(tab.webSocketDebuggerUrl);await new Promise((res,rej)=>{ws.onopen=res;ws.onerror=rej;});
   let seq=0;const pending=new Map();ws.onmessage=e=>{const m=JSON.parse(e.data);if(pending.has(m.id)){const {res,rej}=pending.get(m.id);pending.delete(m.id);m.error?rej(new Error(JSON.stringify(m.error))):res(m.result);}};
   const call=(method,params={})=>new Promise((res,rej)=>{const id=++seq;pending.set(id,{res,rej});ws.send(JSON.stringify({id,method,params}));});
   const js=async expression=>{const r=await call('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw new Error(JSON.stringify(r.exceptionDetails));return r.result.value;};
