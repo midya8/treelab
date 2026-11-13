@@ -1,46 +1,34 @@
 # TreeLab
 
-A regression tree you can inspect from the first split to the final pruning.
-CART and weakest-link cost-complexity pruning are implemented from scratch in
-NumPy. No scikit-learn model, paid API, pretrained model or autograd engine.
+CART regression, weakest-link pruning and group-bootstrap bagging in NumPy.
+Follow a prediction through its tree, inspect one-feature response curves, or
+search for an input that changes a frozen model's output. Training and analysis
+run offline; the browser pages display the saved results.
 
-**[v0.6: live ensemble search bounds](https://midya8.github.io/treelab/forest.html) with exact objective bounds.**
-Search compatible split boxes across all 32 frozen trees. A best-first frontier
-reports verified common-input witnesses, global lower/upper costs and an honest
-`budget_exhausted` state instead of pretending a timeout proves infeasibility.
-Fixed one-axis witnesses seed the search without hiding easy incumbents.
-All 36 fixed outcomes, including unfinished all-feature searches, are retained.
-[Search method, stopping rule and limits](FOREST_SEARCH.md).
+## Choose an analysis
 
-**[v0.5: live constrained multi-feature counterfactuals](https://midya8.github.io/treelab/counterfactual.html) for one frozen CART.**
-Search every leaf under closed feature bounds, immutable inputs and positive
-weighted L1 costs. Return the globally closest finite binary64 witness, every
-feasible candidate and an exact rational cost, with strict-threshold successors
-rather than an epsilon. All 36 fixed real-data requests retain infeasible outcomes.
-[Method, CLI and limits](COUNTERFACTUALS.md). A model counterfactual is not causal
-recourse, plausible chemistry or an ensemble optimum. The existing response
-analysis and all original data/models/reports remain unchanged.
+- **Fit and prune:** inspect CART splits and the weakest-link pruning path. Validation selects a pruning state; stronger same-fit controls remain in the report.
+- **Group bootstrap:** inspect all 32 frozen trees, shared-copy bootstrap groups and out-of-bag support.
+- **One-feature response:** inspect every interval while holding other features fixed. The [response explorer](https://midya8.github.io/treelab/) shows all 66 slices and 1,028 segments.
+- **Single-tree counterfactual:** find the closest allowed binary64 input under weighted L1 cost. The [counterfactual inspector](https://midya8.github.io/treelab/counterfactual.html) retains all 36 requests, including infeasible ones.
+- **Ensemble search:** search compatible boxes across the 32 frozen trees. The [ensemble inspector](https://midya8.github.io/treelab/forest.html) retains all 36 outcomes, including unfinished searches.
 
-**[v0.4: open the live response explorer](https://midya8.github.io/treelab/).** Choose any frozen row/model/feature
-slice, inspect exact intervals and every member leaf/output, and copy or
-download complete input witnesses for attainable extrema. No fitting, new
-inference, API calls, analytics or uploads. See [EXPLORER.md](EXPLORER.md) for
-local use and verification. The browser UI lives in `docs/`.
+Single-tree counterfactuals have exact rational costs and strict-threshold
+successors, not epsilon adjustments. Ensemble search reports global lower/upper
+costs, common-input witnesses and `budget_exhausted` when its bounds have not
+closed. Fixed one-axis witnesses seed the search without hiding easy incumbents.
+Neither a model counterfactual nor a response slice establishes causal recourse,
+plausible chemistry, uncertainty coverage or a new accuracy result. These
+analyses do not refit the frozen models.
 
-**v0.3: exact one-feature response slices for frozen trees and ensembles.**
-Intersect reachable leaf regions, combine all member boundaries, and return
-attainable min/max outputs with concrete binary64 input witnesses. All other
-features stay fixed. The fixed first-three-row demo saves **66 slices / 1,028
-segments**, with member leaf IDs and outputs. These are model responses, not
-causal effects, plausible-wine guarantees, uncertainty intervals or joint-feature
-robustness bounds. No refit or new accuracy claim.
+[Ensemble search](FOREST_SEARCH.md) · [Single-tree counterfactuals](COUNTERFACTUALS.md) · [Response explorer](EXPLORER.md)
 
 ![Complete one-axis response curves and attainable outputs](assets/sweep-audit.svg)
 
 [Sweep method and boundaries](SWEEPS.md) · [Bagging and OOB](BAGGING.md) · [Pruning](METHOD.md)
 
 <details>
-<summary>v0.2 group-bootstrap audit, preserved unchanged</summary>
+<summary>Bagging results and OOB coverage</summary>
 
 ![Group bagging, OOB coverage and all same-fit controls](assets/bagging-audit.svg)
 
@@ -52,7 +40,7 @@ together; zero OOB votes mean null.
 </details>
 
 <details>
-<summary>Original v0.1 pruning audit, preserved unchanged</summary>
+<summary>Pruning path and same-fit controls</summary>
 
 ![All pruning states, held-out controls and a complete prediction route](https://github.com/midya8/treelab/raw/e9a7aed4d140d15233324045089f58d8152bf943/assets/tree-audit.svg)
 
@@ -60,7 +48,7 @@ The linear control beats the single selected and grown trees on this split.
 
 </details>
 
-## What runs
+## Implementation and checks
 
 - All distinct adjacent-value splits are scored with centered prefix sums.
   Leaf predictions are fitting-row means. Split ties use feature index, then
@@ -86,7 +74,7 @@ The linear control beats the single selected and grown trees on this split.
 - Nineteen CLI modes and a package with data, frozen models and report. CI checks
   Python 3.10-3.13 and installs the wheel outside the source checkout.
 
-## Real data, not a random row split with exact-copy leakage
+## Data and exact-copy grouping
 
 The unmodified [UCI Wine Quality dataset](https://archive.ics.uci.edu/dataset/186/wine%2Bquality)
 white-wine CSV has **4,898 rows**, 11 physicochemical features and an ordinal
@@ -109,7 +97,7 @@ split, no repeated-split confidence interval and no future-distribution claim.
 The fixed protocol is min leaf 5, max depth 20; no depth/seed/split search.
 The held-out results did not choose these settings or the pruning state.
 
-## Same-fit controls stay visible
+## Results on the fixed split
 
 | Model, all on the same 2,921 fitting rows | Test RMSE | Test MAE |
 |---|---:|---:|
@@ -238,6 +226,7 @@ python -m treelab forest-audit --output /tmp/forest-audit
 python -m treelab forest-search --model treelab/artifacts/bagging-model.json.gz --input examples/forest-search.json
 ```
 
-Open the [live ensemble inspector](https://midya8.github.io/treelab/forest.html) or `docs/forest.html` locally for all proof states, exact objective bounds,
+Open the [ensemble inspector](https://midya8.github.io/treelab/forest.html) or
+`docs/forest.html` locally for all proof states, exact objective bounds,
 full-member witnesses and the three fixed budgets. [FOREST_SEARCH.md](FOREST_SEARCH.md)
 defines the finite-binary64 model scope, warm starts and incomplete results.
